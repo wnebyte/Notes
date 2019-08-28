@@ -1,0 +1,73 @@
+.root {
+    -fx-background-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+
+.area {
+    -fx-font-family: "MS Comic Sans";
+    -fx-font-size: 14px;
+    -fx-background-color: #262626;
+    -fx-padding: 4;
+    -fx-highlight-fill: gold;
+}
+
+.area .caret {
+    -fx-stroke: white;
+    /* #0ed9e0; */
+}
+
+.area .text {
+    -fx-font-size: 14px;
+    -fx-fill: white;
+    -fx-font-weight: none;
+    -fx-font-style: none;
+    -fx-underline: false;
+
+}
+
+.area .selection {
+    -fx-fill: green;
+}
+
+
+.lineno {
+    -fx-background-color: #323232;
+}
+
+.scale-size-up {
+    -fx-font-size: 1.2em;
+}
+
+.area .bold {
+    -fx-font-weight: bold;
+}
+
+.area .italic {
+    -fx-font-style: italic;
+}
+
+.area .underline {
+    -fx-underline: true;
+}
+
+.area .header-1 {
+    -fx-font-size: 1.4em;
+    -fx-fill: orange;
+}
+
+.area .header-2 {
+    -fx-font-size: 1.3em;
+    -fx-fill: yellow;
+}
+
+.area .header-3 {
+    -fx-font-size: 1.2em;
+    -fx-fill: yellowgreen;
+}
+
+.area .header-4 {
+    -fx-font-size: 1.1em;
+    -fx-fill: lightgreen;
+}

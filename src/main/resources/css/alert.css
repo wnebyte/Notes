@@ -1,0 +1,43 @@
+.dialog-pane {
+    -fx-min-height: 85px;
+    -fx-pref-height: 85px;
+    -fx-max-height: 85px;
+}
+
+.dialog-pane:header *.header-panel *. label {
+    -fx-font-family: "Comic Sans";
+    -fx-text-fill: #262626;
+    -fx-font-size: 16px;
+    -fx-text-alignment: center;
+}
+
+.dialog-pane > *.button-bar > *.container {
+    -fx-margin-right: 20;
+}
+
+
+.ok-button, .close-button, .cancel-button {
+    -fx-font-size: 11px;
+    -fx-border-radius: 0;
+
+    -fx-min-width: 75px;
+    -fx-pref-width: 75px;
+    -fx-max-width: 75px;
+
+    -fx-min-height: 22px;
+    -fx-pref-height: 22px;
+    -fx-max-height: 22px;
+}
+
+.close-button:hover, .cancel-button:hover {
+    -fx-border-color: lightblue;
+}
+
+.ok-button {
+    -fx-background-color: #363636;
+    -fx-text-fill: white;
+}
+
+.ok-button:hover {
+    -fx-background-color: #464646;
+}

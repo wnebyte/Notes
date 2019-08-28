@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.layout.BorderPane?>
+<?import objects.TextEditorPane?>
+
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.input.KeyCodeCombination?>
+<TextEditorPane fx:id="root" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" prefHeight="500.0" prefWidth="600.0" styleClass="root" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.TextEditorController">
+   <top>
+      <MenuBar fx:id="menuBar" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="0.0" prefHeight="25.0" styleClass="menu-bar" BorderPane.alignment="CENTER">
+        <menus>
+          <Menu fx:id="fileMenu" text="_File">
+            <items>
+                <MenuItem fx:id="newMenuItem" mnemonicParsing="false" text="New" onAction="#newAction">
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="N" control="DOWN" meta="UP" shift="UP" shortcut="UP"  />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="openMenuItem" mnemonicParsing="false" text="Open" onAction="#openEvent" >
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="O" control="DOWN" meta="UP" shift="UP" shortcut="UP"  />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text="Save"  onAction="#saveAction">
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="DOWN" meta="UP" shift="UP" shortcut="UP"  />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="saveAsMenuItem" mnemonicParsing="false" text="Save As..." onAction="#saveAsAction" />
+                <SeparatorMenuItem/>
+                <MenuItem fx:id="exitMenuItem" mnemonicParsing="false" text="Exit" onAction="#exitAction"/>
+
+            </items>
+          </Menu>
+          <Menu fx:id="editMenu" text="_Edit">
+            <items>
+                <MenuItem fx:id="undoMenuItem" mnemonicParsing="false" text="Undo" >
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="Z" control="DOWN" meta="UP" shift="UP" shortcut="UP"  />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="cutMenuItem" mnemonicParsing="false" text="Cut" onAction="#cutAction">
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="X" control="DOWN" meta="UP" shift="UP" shortcut="UP"  />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="copyMenuItem" mnemonicParsing="false" text="Copy" >
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="C" control="DOWN" meta="UP" shift="UP" shortcut="UP"  />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="pasteMenuItem" mnemonicParsing="false" text="Paste" >
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="V" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                    </accelerator>
+                </MenuItem>
+                <MenuItem fx:id="deleteMenuItem" mnemonicParsing="false" text="Delete" onAction="#deleteAction">
+                    <accelerator>
+                        <KeyCodeCombination alt="UP" code="DELETE" control="UP" meta="UP" shift="UP" shortcut="UP" />
+                    </accelerator>
+                </MenuItem>
+            </items>
+          </Menu>
+          <Menu fx:id="helpMenu" text="_Help">
+            <items>
+                <MenuItem fx:id="viewHelpMenuItem" mnemonicParsing="false" text="View Help" />
+              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+         <padding>
+            <Insets left="0.0" />
+         </padding>
+      </MenuBar>
+   </top>
+   <padding>
+      <Insets bottom="0.0" left="0.0" right="0.0" top="0.0" />
+   </padding>
+</TextEditorPane>
+
