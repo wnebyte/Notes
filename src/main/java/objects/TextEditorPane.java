@@ -1,5 +1,6 @@
 package objects;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
@@ -7,61 +8,32 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.LineNumberFactory;
 import org.fxmisc.richtext.StyleClassedTextArea;
-import org.fxmisc.wellbehaved.event.InputMap;
-import org.fxmisc.wellbehaved.event.Nodes;
+import org.fxmisc.richtext.model.Paragraph;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.reactfx.collection.LiveList;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Optional;
+import java.time.Duration;
+import java.util.*;
 import java.util.function.IntFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static javafx.scene.input.KeyCode.*;
-import static org.fxmisc.wellbehaved.event.EventPattern.keyPressed;
-import static utilities.TextEditorPaneUtilities.getSpaceChar;
-import static utilities.TextEditorPaneUtilities.getTagString;
-import static utilities.TextEditorPaneUtilities.countIndentation;
-import static utilities.TextEditorPaneUtilities.hasTxtExtension;
-import static utilities.TextEditorPaneUtilities.getTitle;
-import static io.ReadWrite.read;
-import static io.ReadWrite.write;
+import static utilities.TextEditorPaneUtilities.*;
 
 public class TextEditorPane extends BorderPane {
     private final StyleClassedTextArea textArea = new StyleClassedTextArea();
-    private int cpg;
+    private int currPg;
+
     private ArrayList<TagObject> tagObjects = new ArrayList<>();
-    private File txtFile;
-
-    private Stage stage;
-
-    /** if the application is started with the pathway of a .txt file as it's parameters.
-     */
-    public void setFile(File txtFile) {
-        this.txtFile = txtFile;
-        parse(read(txtFile));
-    }
+    private final ArrayList<String> TAGS = new ArrayList<>();
 
     public TextEditorPane() {
-        // add listener on textArea's windowProperty
-        // for the purpose of saving the stage's reference for future usage.
-        textArea.sceneProperty().addListener((observableScene, oldScene, newScene) -> {
-            if (oldScene == null && newScene != null) {
-                newScene.windowProperty().addListener((observableWindow, oldWindow, newWindow) -> {
-                    if (oldWindow == null && newWindow != null) {
-                        stage = (Stage) newWindow;
-                    }
-                });
-            }
-        });
-
         // init general settings
         VirtualizedScrollPane<StyleClassedTextArea> vScrollPane =
                 new VirtualizedScrollPane<>(textArea);
@@ -81,193 +53,82 @@ public class TextEditorPane extends BorderPane {
         IntFunction<Node> arrowFactory = new ArrowFactory(textArea.currentParagraphProperty());
         IntFunction<Node> graphicFactory = line -> {
             HBox hBox = new HBox(
-            //  numberFactory.apply(line),
-              arrowFactory.apply(line)
+                    //  numberFactory.apply(line),
+                    arrowFactory.apply(line)
             );
             hBox.setAlignment(Pos.CENTER_LEFT);
             return hBox;
         };
-        textArea.setParagraphGraphicFactory(graphicFactory);
 
         // add listener on currentParagraphProperty
         // for easier access to reference / value
         textArea.currentParagraphProperty().addListener((observableValue, oldValue, newValue) -> {
             if (!newValue.equals(oldValue)) {
-                cpg = newValue;
+                currPg = newValue;
             }
         });
 
-        // override textArea's KeyPressed.ENTER for custom implementation
-        Nodes.addInputMap(textArea, InputMap.consume(keyPressed(ENTER), e -> {
 
-            int indent = 0;
-            boolean outerbreak = false;
-            for (int paragraph = cpg; paragraph >= 0; paragraph--) {
-                String text = textArea.getText(paragraph);
-                for (int j = tagObjects.size() - 1; j >= 0; j--) {
-                    if (text.contains(tagObjects.get(j).getTextProperty())) {
-                        indent = tagObjects.get(j).getIndent() + 2;
-                        outerbreak = true;
-                        break;
+        // auto-indent: insert previous line's indents on enter
+        final Pattern whiteSpace = Pattern.compile("^\\s+");
+        textArea.addEventHandler(KeyEvent.KEY_PRESSED, KE ->
+        {
+            if (KE.getCode() == ENTER && !KE.isControlDown() && !KE.isAltDown() && !KE.isShiftDown()) {
+                int caretPosition = textArea.getCaretPosition();
+                int currentParagraph = textArea.getCurrentParagraph();
+                Matcher m0 = whiteSpace.matcher(
+                        textArea.getParagraph(currentParagraph - 1).getSegments().get(0));
+                if (m0.find()) Platform.runLater(() -> textArea.insertText(caretPosition, m0.group()));
+            }
+        });
+
+        // add highlighting functionality
+        textArea.multiPlainChanges()
+                .successionEnds(Duration.ofMillis(500))
+                .subscribe(ignore -> textArea.setStyleSpans(0, computeHighlighting(textArea.getText())));
+
+        textArea.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            KeyCode c = event.getCode();
+
+            // add insert 'tag' functionality
+            if (event.isShiftDown() && c == ENTER) {
+                if (!textArea.getText(currPg).stripLeading().startsWith("$")) {
+                    int indent = getNextIndent();
+                    String text = textArea.getText(currPg).strip();
+
+                    textArea.deleteText(currPg, 0, currPg, textArea.getText(currPg).length());
+                    textArea.insertText(currPg, 0, enclose(text, indent));
+                    textArea.moveTo(currPg - 1, textArea.getText(currPg - 1).length());
+                    tagObjects.add(new TagObject("<" + text + ">", indent, "</" + text + ">"));
+                    TAGS.add(text);
+                }
+
+                // add insert 'list' functionality
+                else {
+                    final String KEYWORD = "^[$]list[:]\\s\\d$";
+
+                    if (Pattern.matches(KEYWORD, textArea.getText(currPg).strip())) {
+                        int items = Integer.parseInt(
+                                textArea.getText(currPg).strip().split("\\s")[1]
+                        );
+                        int indent = getNextIndent();
+
+                        textArea.deleteText(currPg, 0, currPg, textArea.getText(currPg).length());
+                        int par = currPg;
+                        int start = par;
+                        for (int i = 1; i <= items; i++) {
+                            textArea.insertText(par, 0,
+                                    indent(indent) + i + ". ");
+                            if (i < items) {
+                                textArea.insertText(par, textArea.getText(par).length(), "\n");
+                            }
+                            par++;
+                        }
+                        textArea.moveTo(start, textArea.getText(start).length());
                     }
                 }
-                if (outerbreak) {
-                    break;
-                }
             }
-            textArea.insertText(
-                    cpg, textArea.getText(cpg).length(),
-                    "\n" + getSpaceChar(indent));
-            textArea.setStyle(cpg, textArea.getInitialTextStyle());
-        }));
-
-        textArea.addEventHandler(KeyEvent.KEY_PRESSED, this::keyPressedOnTextArea);
-    }
-
-    private void keyPressedOnTextArea(@NotNull KeyEvent event) {
-        KeyCode c = event.getCode();
-
-        if (c == F1 || c == F2 || c == F3 || c == F4) {
-            String text = textArea.getText(cpg).stripLeading();
-            int indent = 0;
-            String style = "";
-            switch (event.getCode()) {
-                case F1:
-                    indent = 0;
-                    style = "header-1";
-                    break;
-                case F2:
-                    indent = 2;
-                    style = "header-2";
-                    break;
-                case F3:
-                    indent = 4;
-                    style = "header-3";
-                    break;
-                case F4:
-                    indent = 6;
-                    style = "header-4";
-                    break;
-            }
-
-            textArea.deleteText(cpg, 0, cpg, textArea.getText(cpg).length());
-            textArea.insertText(cpg, 0, getTagString(text, indent));
-            textArea.moveTo(cpg - 1, textArea.getText(cpg - 1).length());
-            textArea.setStyle(cpg - 1, Arrays.asList("scale-size-up", style));
-            textArea.setStyle(cpg + 1, Arrays.asList("scale-size-up", style));
-            tagObjects.add(new TagObject("<" + text + ">", indent));
-        }
-
-        else if (c == BACK_SPACE) {
-            if (textArea.getText(cpg).strip().equals("")) {
-                textArea.setStyle(cpg, textArea.getInitialTextStyle());
-            }
-        }
-    }
-
-    public void newEvent() {
-        Optional<ButtonType> input = confirm();
-
-        if (input.isPresent()) {
-            if (input.get().getButtonData() == ButtonBar.ButtonData.YES) {
-                saveEvent();
-                reset();
-                stage.setTitle("untitled - RandEDT");
-            }
-            else if (input.get().getButtonData() == ButtonBar.ButtonData.NO) {
-                reset();
-                stage.setTitle("untitled - RandEDT");
-            }
-        }
-    }
-
-    public void openEvent() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open");
-        fileChooser.setInitialDirectory(new File("C:/users/wne-/dev"));
-        fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Text Documents (*.txt)", "*.txt"));
-        File file = fileChooser.showOpenDialog(stage);
-
-        if (file != null) {
-            if (hasTxtExtension(file)) {
-                reset();
-
-                txtFile = file;
-                stage.setTitle(getTitle(txtFile));
-                parse(read(txtFile));
-            }
-        }
-    }
-
-    public void saveAsEvent() {
-        String initFileName;
-        File initDir = new File("C:/Users/wne-/dev");
-
-        if (txtFile != null) {
-            initFileName = txtFile.getName();
-        } else {
-            initFileName = "untitled.txt";
-        }
-
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialFileName(initFileName);
-        fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("Text Documents (*.txt)", "*.txt"));
-        if (initDir.exists() && initDir.isDirectory()) {
-            fileChooser.setInitialDirectory(initDir);
-        }
-        File file = fileChooser.showSaveDialog(stage);
-
-        if (file != null ) {
-            if (hasTxtExtension(file)) {
-                txtFile = file;
-                write(txtFile, textArea.getParagraphs());
-                stage.setTitle(getTitle(txtFile));
-            }
-        }
-    }
-
-    public void saveEvent() {
-        if (txtFile != null) {
-            if (hasTxtExtension(txtFile)) {
-                write(txtFile, textArea.getParagraphs());
-            }
-        } else {
-            saveAsEvent();
-        }
-    }
-
-    private Optional<ButtonType> confirm() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.initStyle(StageStyle.DECORATED);
-        alert.initOwner(stage);
-        alert.setTitle("RandEDT");
-
-        alert.setHeaderText(null);
-        alert.getDialogPane().setGraphic(null);
-        alert.setHeaderText("Do you want to save changes to " + stage.getTitle().split(" -")[0] + "?");
-
-        alert.getButtonTypes().removeAll(ButtonType.OK, ButtonType.CANCEL);
-        alert.getButtonTypes().addAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
-
-        Button okButton     = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
-        Button closeButton  = (Button) alert.getDialogPane().lookupButton(ButtonType.NO);
-        Button cancelButton = (Button) alert.getDialogPane().lookupButton(ButtonType.CANCEL);
-
-        okButton.setText("Save");
-        closeButton.setText("Don't Save");
-        cancelButton.setText("Cancel");
-
-        okButton.getStyleClass().add("ok-button");
-        closeButton.getStyleClass().add("close-button");
-        cancelButton.getStyleClass().add("cancel-button");
-
-        alert.getDialogPane().getStylesheets().add(
-                getClass().getResource("/css/alert.css").toExternalForm()
-        );
-
-        return alert.showAndWait();
+        });
     }
 
     private void parse(@NotNull ArrayList<String> text) {
@@ -275,30 +136,18 @@ public class TextEditorPane extends BorderPane {
             textArea.appendText(text.get(i));
             String stripedText = text.get(i).strip();
 
-            if (stripedText.length() >= 2 && stripedText.charAt(0) == '<' &&
+            if (stripedText.length() >= 3 && stripedText.charAt(0) == '<' &&
+                    stripedText.charAt(1) != '/' &&
                     stripedText.charAt(stripedText.length() - 1) == '>') {
 
-                switch (countIndentation(text.get(i))) {
-                    case 0:
-                        textArea.setStyle(cpg, Collections.singletonList("header-1"));
-                        break;
-                    case 2:
-                        textArea.setStyle(cpg, Collections.singletonList("header-2"));
-                        break;
-                    case 4:
-                        textArea.setStyle(cpg, Collections.singletonList("header-3"));
-                        break;
-                    case 6:
-                        textArea.setStyle(cpg, Collections.singletonList("header-4"));
-                        break;
-                }
+                String str = stripedText.replace("<", "").replace(">", "");
 
-                if (stripedText.charAt(1) != '/') {
-                    tagObjects.add(new TagObject(stripedText, countIndentation(text.get(i))));
-                }
-            }
-            else {
-                textArea.setStyle(cpg, textArea.getInitialTextStyle());
+                tagObjects.add(new TagObject(
+                        "<" + str + ">",
+                        countIndentation(text.get(i)),
+                        "</" + str + ">"
+                ));
+                TAGS.add(str);
             }
 
             if (i < text.size() - 1) {
@@ -307,12 +156,99 @@ public class TextEditorPane extends BorderPane {
         }
     }
 
-    private void reset() {
-        textArea.clear();
-        textArea.clearStyle(cpg);
-        txtFile = null;
+
+    private StyleSpans<Collection<String>> computeHighlighting(String text) {
+        String TAG_PATTERN = "(<|</)(" + String.join("|", TAGS) + ")>";
+
+        final String[] NUM_KEYWORDS = new String[]{
+                "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+        };
+
+        final String[] V_KEYWORDS = new String[]{"v", "V"};
+
+        final String[] X_KEYWORDS = new String[]{"x", "X"};
+
+        final String NUM_PATTERN = "(" + String.join("|", NUM_KEYWORDS) + ")";
+
+        final String V_PATTERN = "\\[\\s(" + String.join("|", V_KEYWORDS) + ")\\s]";
+
+        final String X_PATTERN = "\\[\\s(" + String.join("|", X_KEYWORDS) + ")\\s]";
+
+        Pattern PATTERN = Pattern.compile(
+                "(?<TAG>" + TAG_PATTERN + ")"
+                        + "|(?<NUM>" + NUM_PATTERN + ")"
+                        + "|(?<V>" + V_PATTERN + ")"
+                        + "|(?<X>" + X_PATTERN + ")"
+        );
+
+        Matcher matcher = PATTERN.matcher(text);
+        int lastKwEnd = 0;
+        StyleSpansBuilder<Collection<String>> spansBuilder
+                = new StyleSpansBuilder<>();
+
+        while (matcher.find()) {
+            String styleClass =
+                    matcher.group("TAG") != null ? "tag" :
+                            matcher.group("NUM") != null ? "num" :
+                                    matcher.group("V") != null ? "v" :
+                                            matcher.group("X") != null ? "x" : "";
+
+            spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
+            spansBuilder.add(Collections.singletonList(styleClass), matcher.end() - matcher.start());
+            lastKwEnd = matcher.end();
+        }
+        spansBuilder.add(Collections.emptyList(), text.length() - lastKwEnd);
+        return spansBuilder.create();
     }
 
+    private int getNextIndent() {
+        int indent = 0;
+        boolean breakOuter = false;
+
+        for (int i = tagObjects.size() - 1; i >= 0; i--) {
+
+            for (int j = currPg; j >= 0; j--) {
+                String currPgText = textArea.getText(j);
+
+                if (currPgText.contains(tagObjects.get(i).getEndTagProperty())) {
+                    // tag is closed
+                    break;
+                } else if (currPgText.contains(tagObjects.get(i).getTextProperty())) {
+                    // the nearest open tag has been located
+                    indent = tagObjects.get(i).getIndent() + 2;
+                    breakOuter = true;
+                    break;
+                }
+            }
+            if (breakOuter) {
+                break;
+            }
+        }
+
+        return indent;
+    }
+
+    public void displayText(ArrayList<String> lines) {
+        resetEditor();
+        parse(lines);
+    }
+
+    public void resetEditor() {
+        textArea.clear();
+        textArea.clearStyle(currPg);
+    }
+
+    public LiveList<Paragraph<Collection<String>, String, Collection<String>>> getParagraphs() {
+        return textArea.getParagraphs();
+    }
+
+
+    public boolean equals(String text) {
+        return textArea.getText().equals(text);
+    }
+
+
+    @Override
     public void requestFocus() {
         super.requestFocus();
         textArea.requestFocus();

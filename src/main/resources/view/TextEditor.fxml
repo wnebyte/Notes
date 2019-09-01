@@ -32,7 +32,7 @@
                 </MenuItem>
                 <MenuItem fx:id="saveAsMenuItem" mnemonicParsing="false" text="Save As..." onAction="#saveAsAction" />
                 <SeparatorMenuItem/>
-                <MenuItem fx:id="exitMenuItem" mnemonicParsing="false" text="Exit" onAction="#exitAction"/>
+                <MenuItem fx:id="exitMenuItem" mnemonicParsing="false" text="Exit" />
 
             </items>
           </Menu>
@@ -68,7 +68,7 @@
           <Menu fx:id="helpMenu" text="_Help">
             <items>
                 <MenuItem fx:id="viewHelpMenuItem" mnemonicParsing="false" text="View Help" />
-              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" />
+              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" onAction="#aboutAction" />
             </items>
           </Menu>
         </menus>

@@ -36,38 +36,25 @@
     -fx-background-color: #323232;
 }
 
-.scale-size-up {
-    -fx-font-size: 1.2em;
-}
-
-.area .bold {
-    -fx-font-weight: bold;
-}
-
-.area .italic {
-    -fx-font-style: italic;
-}
-
-.area .underline {
-    -fx-underline: true;
-}
-
-.area .header-1 {
-    -fx-font-size: 1.4em;
-    -fx-fill: orange;
-}
-
-.area .header-2 {
+.area .tag {
     -fx-font-size: 1.3em;
     -fx-fill: yellow;
 }
 
-.area .header-3 {
+.area .num {
+    -fx-fill: #0ed9e0;
+}
+
+.area .v {
     -fx-font-size: 1.2em;
     -fx-fill: yellowgreen;
 }
 
-.area .header-4 {
-    -fx-font-size: 1.1em;
-    -fx-fill: lightgreen;
+.area .x {
+    -fx-font-size: 1.2em;
+    -fx-fill: red;
+}
+
+.area .dict {
+    -fx-fill: red;
 }
