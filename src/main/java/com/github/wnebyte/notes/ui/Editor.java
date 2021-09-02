@@ -1,9 +1,11 @@
 package com.github.wnebyte.notes.ui;
 
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -12,6 +14,10 @@ import org.fxmisc.richtext.model.Paragraph;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
+import org.fxmisc.wellbehaved.event.EventPattern;
+import org.fxmisc.wellbehaved.event.InputMap;
+import org.fxmisc.wellbehaved.event.Nodes;
+
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,25 +56,15 @@ public class Editor extends BorderPane {
         };
         area.setParagraphGraphicFactory(graphicFactory);
          */
-    }
-
-    public List<Paragraph<Collection<String>, String, Collection<String>>> getParagraphs() {
-        return area.getDocument().getParagraphs();
-    }
-
-    public void setTextPropertyChangeListener(final ChangeListener<String> changeListener) {
-        area.textProperty().addListener(changeListener);
-    }
-
-    public String getText() {
-        return area.textProperty().getValue();
-    }
-
-    public void replace(final List<String> paragraphs) {
-        area.clear();
-        if (paragraphs != null) {
-            paragraphs.forEach(paragraph -> area.appendText(paragraph + System.lineSeparator()));
-        }
+        // library bug fix
+        area.getUndoManager().performingActionProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if (newValue != null) {
+                    area.moveTo(area.getCurrentParagraph(), area.getCaretColumn());
+                }
+            }
+        });
     }
 
     private Consumer<List<PlainTextChange>> textChangedSubscription() {
@@ -98,6 +94,18 @@ public class Editor extends BorderPane {
                 if (m0.find()) {
                     area.insertText(area.getCaretPosition(), m0.group());
                 }
+                boolean m1 = Pattern.compile("^\\s*#[^#:]*:")
+                        .matcher(getFirstSegment(area.getCurrentParagraph() - 1))
+                        .matches();
+                if (m1) {
+                    area.insertText(area.getCurrentParagraph(), area.getCaretColumn(), "\t");
+                }
+                boolean m2 = Pattern.compile("^\\s*-\\s(.*|)")
+                        .matcher(getFirstSegment(area.getCurrentParagraph() - 1))
+                        .matches();
+                if (m2) {
+                    area.insertText(area.getCurrentParagraph(), area.getCaretColumn(), "- ");
+                }
             }
         };
     }
@@ -121,8 +129,11 @@ public class Editor extends BorderPane {
     }
 
     private String getFirstSegment(int paragraph) {
-        return area.getParagraph(paragraph).getSegments()
-                .get(0);
+        try {
+            return area.getParagraph(paragraph).getSegments().get(0);
+        } catch (IndexOutOfBoundsException e) {
+            return "";
+        }
     }
 
     private String getLastSegment(int paragraph) {
@@ -133,5 +144,45 @@ public class Editor extends BorderPane {
     private void deleteCurrentParagraph() {
         area.deleteText(area.getCurrentParagraph(), 0,
                 area.getCurrentParagraph(), area.getText(area.getCurrentParagraph()).length());
+    }
+
+
+    public List<Paragraph<Collection<String>, String, Collection<String>>> getParagraphs() {
+        return area.getDocument().getParagraphs();
+    }
+
+    public void setTextPropertyChangeListener(final ChangeListener<String> changeListener) {
+        area.textProperty().addListener(changeListener);
+    }
+
+    public String getText() {
+        return area.textProperty().getValue();
+    }
+
+    public void replace(final List<String> paragraphs) {
+        delete();
+        if (paragraphs != null) {
+            paragraphs.forEach(paragraph -> area.appendText(paragraph + System.lineSeparator()));
+        }
+    }
+
+    public void paste() {
+        area.paste();
+    }
+
+    public void cut() {
+        area.cut();
+    }
+
+    public void copy() {
+        area.copy();
+    }
+
+    public void undo() {
+        area.undo();
+    }
+
+    public void delete() {
+        area.clear();
     }
 }

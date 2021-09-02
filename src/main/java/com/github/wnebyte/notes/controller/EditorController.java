@@ -174,6 +174,32 @@ public class EditorController {
         }
     }
 
+    // Todo: accelerator events are eaten up by the editor
+    @FXML
+    private void cut() {
+        editor.cut();
+    }
+
+    @FXML
+    private void copy() {
+        editor.copy();
+    }
+
+    @FXML
+    private void paste() {
+        editor.paste();
+    }
+
+    @FXML
+    private void undo() {
+        editor.undo();
+    }
+
+    @FXML
+    private void delete() {
+        editor.delete();
+    }
+
     private ButtonBar.ButtonData promptSaveChanges() {
         alert.setHeaderText("Do you want to save changes to " + stage.getTitle());
         Optional<ButtonType> result = alert.showAndWait();
