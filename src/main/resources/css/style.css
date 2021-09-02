@@ -1,5 +1,8 @@
 * {
-    -fx-primary-color: #300A24;
+    /*
+    #300A24;
+    */
+    -fx-primary-color: rgb(12, 12, 12);
     -fx-my-menu-color: derive(-fx-primary-color, 10%);
     -fx-my-menu-color-highlighted: #455a64;
     -fx-my-menu-font-color: #FFFFFF;
@@ -122,8 +125,13 @@
 }
 
 .element {
-    -fx-font-size: 1.2em;
+    -fx-font-size: 1.0em;
     -fx-fill: yellow;
+}
+
+.hash {
+    -fx-font-size: 1.0em;
+    -fx-fill: purple;
 }
 
 /**
