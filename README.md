@@ -1,1 +1,1 @@
-# RandEdt
+# com.github.wnebyte.notes.Notes

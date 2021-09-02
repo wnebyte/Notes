@@ -1,60 +1,173 @@
-.root {
+* {
+    -fx-primary-color: #300A24;
+    -fx-my-menu-color: derive(-fx-primary-color, 10%);
+    -fx-my-menu-color-highlighted: #455a64;
+    -fx-my-menu-font-color: #FFFFFF;
+    -fx-my-menu-font-color-highlighted: #FFFFFF;
+}
+
+.editor {
     -fx-background-color: transparent;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
 
-
-.area {
-    -fx-font-family: "MS Comic Sans";
-    -fx-font-size: 14px;
-    -fx-background-color: #262626;
+.styled-text-area {
+    -fx-font-family: "Consolas", "Monospaced", "Comic Sans";
+    -fx-font-size: 16px;
+    -fx-background-color: -fx-primary-color;
     -fx-padding: 4;
     -fx-highlight-fill: gold;
 }
 
-.area .caret {
-    -fx-stroke: white;
-    /* #0ed9e0; */
-}
-
-.area .text {
-    -fx-font-size: 14px;
-    -fx-fill: white;
-    -fx-font-weight: none;
-    -fx-font-style: none;
-    -fx-underline: false;
-
-}
-
-.area .selection {
+.lineno {
+    -fx-background-color: derive(-fx-primary-color, 10%);
     -fx-fill: green;
 }
 
-
-.lineno {
-    -fx-background-color: #323232;
+.caret {
+    -fx-stroke: white;
 }
 
-.area .tag {
-    -fx-font-size: 1.3em;
+.menu-bar {
+    -fx-background-color: -fx-my-menu-color;
+}
+
+.menu-bar > .container > .menu-button {
+    -fx-background-color: -fx-my-menu-color;
+
+}
+
+.menu-bar > .container > .menu-button > .label {
+    -fx-text-fill: -fx-my-menu-font-color;
+}
+
+.menu-bar > .container > .menu-button > .label:disabled {
+    -fx-opacity: 1.0;
+}
+
+.menu-bar > .container > .menu-button:hover,
+.menu-bar > .container > .menu-button:focused,
+.menu-bar > .container > .menu-button:showing {
+    -fx-background-color: -fx-my-menu-color-highlighted;
+}
+
+.menu-bar > .container > .menu-button:hover > .label,
+.menu-bar > .container > .menu-button:focused > .label,
+.menu-bar > .container > .menu-button:showing > .label {
+    -fx-text-fill: -fx-my-menu-font-color-highlighted;
+}
+
+.menu-item {
+    -fx-background-color: -fx-my-menu-color;
+
+}
+
+.menu-item .label {
+    -fx-text-fill: -fx-my-menu-font-color;
+}
+
+.menu-item .label:disabled {
+    -fx-opacity: 1.0;
+}
+
+.menu-item:hover,
+.menu-item:focused,
+.menu-item:showing
+ {
+   -fx-background-color: -fx-my-menu-color-highlighted;
+}
+
+.context-menu {
+    -fx-background-color: -fx-my-menu-color;
+}
+
+.virtualized-scroll-pane {
+    -fx-background-color: -fx-primary-color;
+    -fx-padding: 0;
+    -fx-cursor: default;
+}
+
+.virtualized-scroll-pane > .scroll-bar:vertical,
+.virtualized-scroll-pane > .scroll-bar:vertical > .track,
+.virtualized-scroll-pane > .scroll-bar:vertical > .track-background,
+.virtualized-scroll-pane > .scroll-bar:horizontal,
+.virtualized-scroll-pane > .scroll-bar:horizontal > .track,
+.virtualized-scroll-pane > .scroll-bar:horizontal > .track-background {
+    -fx-background-color: -fx-primary-color;
+}
+
+.virtualized-scroll-pane > .scroll-bar:vertical .track,
+.virtualized-scroll-pane > .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+}
+
+.virtualized-scroll-pane > .scroll-bar > .increment-button,
+.virtualized-scroll-pane > .scroll-bar > .decrement-button {
+
+}
+
+.virtualized-scroll-pane > .scroll-bar > .increment-button:hover,
+.virtualized-scroll-pane > .scroll-bar > .decrement-button:hover {
+
+}
+
+.virtualized-scroll-pane > .scroll-bar > .increment-button > .increment-arrow,
+.virtualized-scroll-pane > .scroll-bar > .decrement-button > .decrement-arrow {
+    -fx-background-color: lightgreen;
+}
+
+.text {
+    -fx-fill: white;
+}
+
+.element {
+    -fx-font-size: 1.2em;
     -fx-fill: yellow;
 }
 
-.area .num {
-    -fx-fill: #0ed9e0;
+/**
+.dialog-pane {
+    -fx-min-height: 85px;
+    -fx-pref-height: 85px;
+    -fx-max-height: 85px;
 }
 
-.area .v {
-    -fx-font-size: 1.2em;
-    -fx-fill: yellowgreen;
+.dialog-pane:header *.header-panel *. label {
+    -fx-font-family: "Comic Sans";
+    -fx-text-fill: #262626;
+    -fx-font-size: 16px;
+    -fx-text-alignment: center;
 }
 
-.area .x {
-    -fx-font-size: 1.2em;
-    -fx-fill: red;
+.dialog-pane > *.button-bar > *.container {
+    -fx-margin-right: 20;
 }
 
-.area .dict {
-    -fx-fill: red;
+
+.ok-button, .close-button, .cancel-button {
+    -fx-font-size: 11px;
+    -fx-border-radius: 0;
+
+    -fx-min-width: 75px;
+    -fx-pref-width: 75px;
+    -fx-max-width: 75px;
+
+    -fx-min-height: 22px;
+    -fx-pref-height: 22px;
+    -fx-max-height: 22px;
 }
+
+.close-button:hover, .cancel-button:hover {
+    -fx-border-color: lightblue;
+}
+
+.ok-button {
+    -fx-background-color: #363636;
+    -fx-text-fill: white;
+}
+
+.ok-button:hover {
+    -fx-background-color: #464646;
+}
+*/
