@@ -5,6 +5,9 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * This class is a repository class used to read and write files to the filesystem.
+ */
 public class Repository {
 
     private static Repository instance = null;
@@ -12,14 +15,14 @@ public class Repository {
     public Repository() {}
 
     public List<String> read(final File file) {
-        return Storage.read(file);
+        return IO.read(file);
     }
 
     public void write(
             final File file,
             final List<Paragraph<Collection<String>, String, Collection<String>>> paragraphs
     ) {
-        Storage.write(file, paragraphs);
+        IO.write(file, paragraphs);
     }
 
     public static Repository getInstance() {

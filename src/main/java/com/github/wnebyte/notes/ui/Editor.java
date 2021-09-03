@@ -25,6 +25,9 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * This class is a high level text editor.
+ */
 public class Editor extends BorderPane {
 
     private final StyleClassedTextArea area = new StyleClassedTextArea();
@@ -203,6 +206,11 @@ public class Editor extends BorderPane {
         return spansBuilder.create();
     }
 
+    /**
+     * Returns the first segment belonging to the specified <code>paragraph</code>.
+     * @param paragraph whose first segment is to be returned.
+     * @return the first segment.
+     */
     private String getFirstSegment(int paragraph) {
         try {
             return area.getParagraph(paragraph).getSegments().get(0);
@@ -211,29 +219,24 @@ public class Editor extends BorderPane {
         }
     }
 
-    private String getLastSegment(int paragraph) {
-        return area.getParagraph(paragraph).getSegments()
-                .get(area.getParagraph(paragraph).getSegments().size() - 1);
-    }
-
-    private void deleteCurrentParagraph() {
-        area.deleteText(area.getCurrentParagraph(), 0,
-                area.getCurrentParagraph(), area.getText(area.getCurrentParagraph()).length());
-    }
-
-
+    /**
+     * @return the editor's paragraphs.
+     */
     public List<Paragraph<Collection<String>, String, Collection<String>>> getParagraphs() {
         return area.getDocument().getParagraphs();
     }
 
-    public void setTextPropertyChangeListener(final ChangeListener<String> changeListener) {
-        area.textProperty().addListener(changeListener);
-    }
-
+    /**
+     * @return the contents of the editor as a String.
+     */
     public String getText() {
         return area.textProperty().getValue();
     }
 
+    /**
+     * Clears the editor, and appends the contents of the specified <code>paragraphs</code> to the editor.
+     * @param paragraphs to append.
+     */
     public void replace(final List<String> paragraphs) {
         delete();
         if (paragraphs != null) {
@@ -241,22 +244,37 @@ public class Editor extends BorderPane {
         }
     }
 
+    /**
+     * Inserts the content from the clipboard into the editor.
+     */
     public void paste() {
         area.paste();
     }
 
+    /**
+     * Transfers the currently selected text to the clipboard, removing the current selection.
+     */
     public void cut() {
         area.cut();
     }
 
+    /**
+     * Transfers the currently selected text to the clipboard, leaving the current selection.
+     */
     public void copy() {
         area.copy();
     }
 
+    /**
+     * Undoes the previous modification to the editor.
+     */
     public void undo() {
         area.undo();
     }
 
+    /**
+     * Clears the editor.
+     */
     public void delete() {
         area.clear();
     }

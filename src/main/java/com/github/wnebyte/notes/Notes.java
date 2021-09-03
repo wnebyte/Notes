@@ -17,7 +17,7 @@ public class Notes extends Application {
         Parent root = loader.load();
         Scene scene = new Scene(root, 775, 550);
         stage.setScene(scene);
-        stage.setTitle("#otes");
+        stage.setTitle("untitled.txt");
         stage.show();
     }
 }

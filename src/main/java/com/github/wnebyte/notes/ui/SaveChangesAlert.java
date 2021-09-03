@@ -14,12 +14,11 @@ public class SaveChangesAlert extends Alert {
 
     private void initialize() {
         initStyle(StageStyle.DECORATED);
-        setTitle("#otes");
+        setTitle("Notes");
         getButtonTypes().clear();
         getButtonTypes().addAll(
                 new ButtonType("Save", ButtonBar.ButtonData.YES),
                 new ButtonType("Don't Save", ButtonBar.ButtonData.NO),
-                new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE)
-        );
+                new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE));
     }
 }

@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class Storage {
+/**
+ * This class declares methods for reading and writing text files to the filesystem.
+ */
+public final class IO {
 
     public static ArrayList<String> read(final File file) {
         ArrayList<String> lines = new ArrayList<>();

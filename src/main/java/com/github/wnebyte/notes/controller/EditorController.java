@@ -1,11 +1,12 @@
 package com.github.wnebyte.notes.controller;
 
-import com.github.wnebyte.notes.util.Revision;
+import com.github.wnebyte.notes.util.Checksum;
 import com.github.wnebyte.notes.ui.Editor;
 import com.github.wnebyte.notes.io.Repository;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -15,30 +16,35 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import com.github.wnebyte.notes.ui.SaveChangesAlert;
+import javafx.stage.WindowEvent;
+
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
 public class EditorController {
 
-    private final Repository repository = Repository.getInstance();
-
-    private final Alert alert = new SaveChangesAlert(Alert.AlertType.CONFIRMATION);
-
     @FXML
     private Editor editor;
 
     private File dir;
 
-    private File content;
-
-    private final SimpleObjectProperty<File> contentProperty = new SimpleObjectProperty<>(null);
-
     private String snapshot;
 
     private Stage stage;
 
-    private final Revision<String> version = new Revision<String>() {
+    private File content;
+
+    private final SimpleObjectProperty<File> contentProperty = new SimpleObjectProperty<>(null);
+
+    private final Repository repository = Repository.getInstance();
+
+    private final Alert alert = new SaveChangesAlert(Alert.AlertType.CONFIRMATION);
+
+    /*
+    used to determine whether unsaved changes have been made to the currently loaded file.
+     */
+    private final Checksum<String> version = new Checksum<String>() {
         @Override
         public boolean hasChanged(final String content, final String snapshot) {
             if ((content != null) && (snapshot != null)) {
@@ -48,9 +54,18 @@ public class EditorController {
         }
     };
 
-    public EditorController() {}
+    /**
+     * Constructs a new instance.
+     */
+    public EditorController() { }
 
+    /**
+     * Initializes this Controller.
+     */
     public void initialize() {
+        /*
+        initialize the initialDirectory to be used by the fileChooser.
+         */
         String username = System.getProperty("user.name");
         File dir = new File("C:"
                 .concat(File.separator)
@@ -68,6 +83,10 @@ public class EditorController {
                 this.dir = roots[0];
             }
         }
+        /*
+        add a changeListener to the contentProperty to update the content and stage title
+        whenever a new file has been loaded.
+         */
         contentProperty.addListener(new ChangeListener<File>() {
             @Override
             public void changed(ObservableValue<? extends File> observable, File oldValue, File newValue) {
@@ -78,7 +97,9 @@ public class EditorController {
                 }
             }
         });
-
+        /*
+        add a changeListener to the scene and stage properties to assign the stage to an instance variable.
+         */
         editor.sceneProperty().addListener(new ChangeListener<Scene>() {
             @Override
             public void changed(
@@ -96,6 +117,7 @@ public class EditorController {
                         ) {
                             if ((oldWindow == null) && (newWindow != null)) {
                                 stage = (Stage) newWindow;
+                                stage.addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, EditorController.this::close);
                                 alert.initOwner(stage);
                             }
                         }
@@ -105,6 +127,9 @@ public class EditorController {
         });
     }
 
+    /**
+     * Lets the user specify a file to be loaded from the filesystem.
+     */
     @FXML
     private void openFile() {
         if (version.hasChanged(editor.getText(), snapshot)) {
@@ -117,7 +142,6 @@ public class EditorController {
             }
         }
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open");
         if (dir != null) {
             fileChooser.setInitialDirectory(dir);
         }
@@ -134,8 +158,45 @@ public class EditorController {
         }
     }
 
+    /**
+     * Lets the user save the loaded file to the filesystem at a location of their choosing.
+     */
     @FXML
-    private void closeFile() {
+    private void saveFileAs() {
+        String fileName = (content != null) ? content.getName() : "untitled.txt";
+        FileChooser fileChooser = new FileChooser();
+        if (dir != null) {
+            fileChooser.setInitialDirectory(dir);
+        }
+        fileChooser.setInitialFileName(fileName);
+        fileChooser.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter("Text Documents (*.txt)", "*.txt"));
+        File file = fileChooser.showSaveDialog(stage);
+        if (file != null) {
+            contentProperty.setValue(file);
+            saveFile();
+        }
+    }
+
+    /**
+     * Lets the user save the loaded file to the filesystem.
+     */
+    @FXML
+    private void saveFile() {
+        if (content == null) {
+            saveFileAs();
+        }
+        else {
+            repository.write(content, editor.getParagraphs());
+            snapshot = editor.getText();
+        }
+    }
+
+    /**
+     * Closes the application.
+     */
+    @FXML
+    private void close() {
         if (version.hasChanged(editor.getText(), snapshot)) {
             switch (promptSaveChanges()) {
                 case YES:
@@ -149,57 +210,67 @@ public class EditorController {
         System.exit(1);
     }
 
-    @FXML
-    private void saveFile() {
-        if (content == null) {
-            saveFileAs();
+    private void close(final WindowEvent event) {
+        if (version.hasChanged(editor.getText(), snapshot)) {
+            switch (promptSaveChanges()) {
+                case YES:
+                    saveFile();
+                    break;
+                case CANCEL_CLOSE:
+                    if (event != null) {
+                        event.consume();
+                    }
+                    return;
+            }
         }
-        else {
-            repository.write(content, editor.getParagraphs());
-        }
+        stage.close();
+        System.exit(1);
     }
 
-    @FXML
-    private void saveFileAs() {
-        String fileName = (content != null) ? content.getName() : "untitled.txt";
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(dir);
-        fileChooser.setInitialFileName(fileName);
-        fileChooser.getExtensionFilters()
-                .add(new FileChooser.ExtensionFilter("Text Documents (*.txt)", "*.txt"));
-        File file = fileChooser.showSaveDialog(stage);
-        if (file != null) {
-            contentProperty.setValue(file);
-            saveFile();
-        }
-    }
-
-    // Todo: accelerator events are eaten up by the editor
+    /**
+     * Transfers the currently selected text to the clipboard, removing the current selection.
+     */
     @FXML
     private void cut() {
         editor.cut();
     }
 
+    /**
+     * Transfers the currently selected text to the clipboard, leaving the current selection.
+     */
     @FXML
     private void copy() {
         editor.copy();
     }
 
+    /**
+     * Inserts the content from the clipboard into the editor.
+     */
     @FXML
     private void paste() {
         editor.paste();
     }
 
+    /**
+     * Undoes the previous modification to the editor.
+     */
     @FXML
     private void undo() {
         editor.undo();
     }
 
+    /**
+     * Clears the editor.
+     */
     @FXML
     private void delete() {
         editor.delete();
     }
 
+    /**
+     * Prompts the user whether they'd like to save changes made to the currently loaded file.
+     * @return the user initiated result
+     */
     private ButtonBar.ButtonData promptSaveChanges() {
         alert.setHeaderText("Do you want to save changes to " + stage.getTitle());
         Optional<ButtonType> result = alert.showAndWait();

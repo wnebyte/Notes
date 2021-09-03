@@ -29,7 +29,7 @@
                 </MenuItem>
                 <MenuItem mnemonicParsing="false" text="Save As..." onAction="#saveFileAs" />
                 <SeparatorMenuItem/>
-                <MenuItem mnemonicParsing="false" text="Exit" onAction="#closeFile"/>
+                <MenuItem mnemonicParsing="false" text="Exit" onAction="#close"/>
             </Menu>
             <Menu mnemonicParsing="false" text="Edit">
                 <MenuItem mnemonicParsing="false" text="Undo" onAction="#undo">
